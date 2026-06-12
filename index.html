@@ -1,0 +1,1704 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+
+  <title>AMM 本地交易所</title>
+
+  <script src="https://cdn.jsdelivr.net/npm/vue@2.7.14"></script>
+  <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+
+  <style>
+    :root {
+      --bg-main: #f4f7fb;
+      --bg-soft: #eef2ff;
+      --card-bg: #ffffff;
+      --primary: #4f46e5;
+      --primary-light: #6366f1;
+      --primary-soft: #e0e7ff;
+      --success: #10b981;
+      --warning: #f59e0b;
+      --danger: #ef4444;
+      --purple: #8b5cf6;
+      --text-main: #0f172a;
+      --text-sub: #64748b;
+      --border: #e2e8f0;
+      --shadow: 0 18px 45px rgba(15, 23, 42, 0.08);
+      --shadow-soft: 0 10px 25px rgba(15, 23, 42, 0.06);
+      --radius-lg: 24px;
+      --radius-md: 16px;
+      --radius-sm: 12px;
+    }
+
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      min-height: 100vh;
+      font-family: "Segoe UI", "Microsoft YaHei", Arial, sans-serif;
+      color: var(--text-main);
+      background:
+        radial-gradient(circle at 10% 10%, rgba(99,102,241,0.16), transparent 30%),
+        radial-gradient(circle at 90% 5%, rgba(16,185,129,0.14), transparent 28%),
+        linear-gradient(180deg, #f8fafc 0%, #eef2ff 100%);
+    }
+
+    button,
+    input {
+      font-family: inherit;
+    }
+
+    .container {
+      max-width: 1280px;
+      margin: 0 auto;
+      padding: 24px;
+    }
+
+    .topbar {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 18px;
+      margin-bottom: 22px;
+    }
+
+    .brand {
+      display: flex;
+      align-items: center;
+      gap: 14px;
+    }
+
+    .brand-logo {
+      width: 54px;
+      height: 54px;
+      border-radius: 18px;
+      background: linear-gradient(135deg, var(--primary), var(--purple));
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: white;
+      font-weight: 800;
+      letter-spacing: 0.5px;
+      box-shadow: 0 12px 28px rgba(79, 70, 229, 0.25);
+      overflow: hidden;
+      flex-shrink: 0;
+    }
+
+    .brand-logo img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+    }
+
+    .brand-title h1 {
+      font-size: 26px;
+      line-height: 1.2;
+      margin-bottom: 4px;
+    }
+
+    .brand-title p {
+      color: var(--text-sub);
+      font-size: 14px;
+    }
+
+    .top-actions {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      flex-wrap: wrap;
+      justify-content: flex-end;
+    }
+
+    .user-pill {
+      background: rgba(255, 255, 255, 0.78);
+      border: 1px solid rgba(226, 232, 240, 0.9);
+      backdrop-filter: blur(12px);
+      padding: 10px 16px;
+      border-radius: 999px;
+      color: var(--text-main);
+      font-weight: 600;
+      box-shadow: var(--shadow-soft);
+      font-size: 14px;
+    }
+
+    .card {
+      background: rgba(255, 255, 255, 0.88);
+      border: 1px solid rgba(226, 232, 240, 0.85);
+      border-radius: var(--radius-lg);
+      padding: 22px;
+      box-shadow: var(--shadow-soft);
+      backdrop-filter: blur(12px);
+      margin-bottom: 18px;
+    }
+
+    .card-title {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      margin-bottom: 16px;
+    }
+
+    .card-title h2,
+    .card-title h3 {
+      font-size: 20px;
+      font-weight: 750;
+      color: var(--text-main);
+    }
+
+    .muted {
+      color: var(--text-sub);
+      font-size: 13px;
+    }
+
+    .login-wrap {
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 24px;
+    }
+
+    .login-card {
+      width: 100%;
+      max-width: 430px;
+      background: rgba(255,255,255,0.92);
+      border: 1px solid rgba(226,232,240,0.88);
+      border-radius: 28px;
+      padding: 34px;
+      box-shadow: var(--shadow);
+      backdrop-filter: blur(16px);
+    }
+
+    .login-brand {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      margin-bottom: 28px;
+      gap: 12px;
+    }
+
+    .login-brand h1 {
+      font-size: 28px;
+      color: var(--text-main);
+    }
+
+    .login-brand p {
+      color: var(--text-sub);
+      font-size: 14px;
+    }
+
+    .input-group {
+      margin-bottom: 16px;
+    }
+
+    .input-label {
+      display: block;
+      font-size: 13px;
+      color: var(--text-sub);
+      margin-bottom: 8px;
+      font-weight: 650;
+    }
+
+    input[type="text"],
+    input[type="password"],
+    input[type="number"] {
+      width: 100%;
+      padding: 13px 15px;
+      border: 1.5px solid var(--border);
+      border-radius: var(--radius-sm);
+      background: #fff;
+      color: var(--text-main);
+      font-size: 15px;
+      outline: none;
+      transition: all 0.18s ease;
+    }
+
+    input:focus {
+      border-color: var(--primary-light);
+      box-shadow: 0 0 0 4px rgba(99,102,241,0.13);
+    }
+
+    input[type="range"] {
+      width: 100%;
+      accent-color: var(--primary);
+    }
+
+    .btn {
+      border: none;
+      padding: 11px 18px;
+      border-radius: 13px;
+      font-size: 14px;
+      font-weight: 700;
+      cursor: pointer;
+      transition: all 0.18s ease;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 7px;
+      white-space: nowrap;
+    }
+
+    .btn:hover {
+      transform: translateY(-1px);
+      filter: brightness(1.04);
+    }
+
+    .btn:active {
+      transform: scale(0.98);
+    }
+
+    .btn:disabled {
+      opacity: 0.5;
+      cursor: not-allowed;
+      transform: none;
+    }
+
+    .btn-primary {
+      background: var(--primary);
+      color: #fff;
+    }
+
+    .btn-success {
+      background: var(--success);
+      color: #fff;
+    }
+
+    .btn-warning {
+      background: var(--warning);
+      color: #fff;
+    }
+
+    .btn-danger {
+      background: var(--danger);
+      color: #fff;
+    }
+
+    .btn-purple {
+      background: var(--purple);
+      color: #fff;
+    }
+
+    .btn-ghost {
+      background: #fff;
+      color: var(--text-main);
+      border: 1px solid var(--border);
+    }
+
+    .btn-soft {
+      background: var(--primary-soft);
+      color: var(--primary);
+    }
+
+    .btn-row {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+      align-items: center;
+    }
+
+    .main-grid {
+      display: grid;
+      grid-template-columns: 1.05fr 0.95fr;
+      gap: 18px;
+    }
+
+    .stats-grid {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 14px;
+      margin-bottom: 18px;
+    }
+
+    .stat {
+      background: rgba(255,255,255,0.78);
+      border: 1px solid rgba(226,232,240,0.86);
+      border-radius: 18px;
+      padding: 16px;
+      box-shadow: 0 8px 20px rgba(15,23,42,0.04);
+    }
+
+    .stat-label {
+      color: var(--text-sub);
+      font-size: 12px;
+      margin-bottom: 8px;
+      font-weight: 650;
+    }
+
+    .stat-value {
+      font-size: 18px;
+      font-weight: 800;
+      color: var(--text-main);
+      word-break: break-all;
+    }
+
+    .stat-note {
+      font-size: 12px;
+      color: var(--text-sub);
+      margin-top: 6px;
+    }
+
+    .tabs {
+      display: flex;
+      gap: 10px;
+      margin-bottom: 18px;
+      flex-wrap: wrap;
+    }
+
+    .tab {
+      border: 1px solid var(--border);
+      background: rgba(255,255,255,0.75);
+      color: var(--text-sub);
+      padding: 11px 18px;
+      border-radius: 999px;
+      font-weight: 750;
+      cursor: pointer;
+      transition: all 0.18s ease;
+    }
+
+    .tab.active {
+      background: var(--primary);
+      color: #fff;
+      border-color: var(--primary);
+      box-shadow: 0 12px 22px rgba(79,70,229,0.22);
+    }
+
+    .preview-box {
+      background: linear-gradient(135deg, #f8fafc, #eef2ff);
+      border: 1px solid #dbeafe;
+      border-radius: 16px;
+      padding: 14px;
+      color: #334155;
+      line-height: 1.8;
+      font-size: 14px;
+      margin-top: 14px;
+    }
+
+    .preview-row {
+      display: flex;
+      justify-content: space-between;
+      gap: 12px;
+      border-bottom: 1px dashed #cbd5e1;
+      padding: 6px 0;
+    }
+
+    .preview-row:last-child {
+      border-bottom: none;
+    }
+
+    .highlight {
+      color: var(--primary);
+      font-weight: 800;
+    }
+
+    .guide-list {
+      padding-left: 20px;
+      color: #334155;
+      line-height: 1.9;
+      font-size: 14px;
+    }
+
+    .table-wrap {
+      overflow-x: auto;
+      border-radius: 18px;
+      border: 1px solid var(--border);
+      background: #fff;
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      min-width: 960px;
+    }
+
+    th,
+    td {
+      padding: 13px 14px;
+      text-align: left;
+      border-bottom: 1px solid #eef2f7;
+      font-size: 13px;
+      white-space: nowrap;
+    }
+
+    th {
+      background: #f8fafc;
+      color: #475569;
+      font-weight: 800;
+    }
+
+    tbody tr:hover {
+      background: #f8fafc;
+    }
+
+    .status-normal {
+      color: var(--success);
+      font-weight: 800;
+    }
+
+    .status-canceled {
+      color: var(--danger);
+      font-weight: 800;
+    }
+
+    .chart-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 18px;
+    }
+
+    .chart-container {
+      height: 260px;
+      width: 100%;
+    }
+
+    .toast {
+      position: fixed;
+      right: 24px;
+      top: 24px;
+      z-index: 9999;
+      min-width: 260px;
+      max-width: 420px;
+      padding: 14px 16px;
+      border-radius: 16px;
+      color: #fff;
+      box-shadow: var(--shadow);
+      font-size: 14px;
+      font-weight: 650;
+    }
+
+    .toast.success {
+      background: var(--success);
+    }
+
+    .toast.error {
+      background: var(--danger);
+    }
+
+    .toast.info {
+      background: var(--primary);
+    }
+
+    .divider {
+      height: 1px;
+      background: var(--border);
+      margin: 16px 0;
+    }
+
+    @media (max-width: 1050px) {
+      .stats-grid {
+        grid-template-columns: repeat(2, 1fr);
+      }
+
+      .main-grid,
+      .chart-grid {
+        grid-template-columns: 1fr;
+      }
+    }
+
+    @media (max-width: 700px) {
+      .container {
+        padding: 16px;
+      }
+
+      .topbar {
+        align-items: flex-start;
+        flex-direction: column;
+      }
+
+      .top-actions {
+        width: 100%;
+        justify-content: flex-start;
+      }
+
+      .stats-grid {
+        grid-template-columns: 1fr;
+      }
+
+      .brand-title h1 {
+        font-size: 22px;
+      }
+
+      .login-card {
+        padding: 26px;
+      }
+    }
+  </style>
+</head>
+
+<body>
+<div id="app">
+
+  <div v-if="toast.show" :class="['toast', toast.type]">
+    {{ toast.message }}
+  </div>
+
+  <!-- 登录界面 -->
+  <div v-if="!loggedIn" class="login-wrap">
+    <div class="login-card">
+      <div class="login-brand">
+        <div class="brand-logo">
+          <img v-if="logo.logo_url" :src="logo.logo_url" />
+          <span v-else>{{ logo.logo_text || 'AMM' }}</span>
+        </div>
+
+        <div style="text-align:center;">
+          <h1>AMM 本地交易所</h1>
+          <p>恒定乘积做市 · 交易模拟 · 流动性管理</p>
+        </div>
+      </div>
+
+      <div class="input-group">
+        <label class="input-label">用户名</label>
+        <input v-model="loginForm.username" placeholder="请输入用户名" @keyup.enter="login" />
+      </div>
+
+      <div class="input-group">
+        <label class="input-label">密码</label>
+        <input v-model="loginForm.password" type="password" placeholder="请输入密码" @keyup.enter="login" />
+      </div>
+
+      <div class="btn-row" style="margin-top: 22px;">
+        <button class="btn btn-primary" style="flex:1;" @click="login">登录</button>
+        <button class="btn btn-soft" style="flex:1;" @click="register">注册</button>
+      </div>
+
+      <div class="preview-box" style="margin-top: 18px;">
+        <div class="preview-row">
+          <span>默认账号</span>
+          <b>admin</b>
+        </div>
+        <div class="preview-row">
+          <span>默认密码</span>
+          <b>123456</b>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 主界面 -->
+  <div v-else class="container">
+    <div class="topbar">
+      <div class="brand">
+        <div class="brand-logo">
+          <img v-if="logo.logo_url" :src="logo.logo_url" />
+          <span v-else>{{ logo.logo_text || 'AMM' }}</span>
+        </div>
+
+        <div class="brand-title">
+          <h1>AMM 本地交易所</h1>
+          <p>自动做市商模拟系统 · 当前登录：{{ user.username }}</p>
+        </div>
+      </div>
+
+      <div class="top-actions">
+        <div class="user-pill">
+          X {{ user.x.toFixed(2) }} · Y {{ user.y.toFixed(2) }} · LP {{ user.lp.toFixed(4) }}
+        </div>
+
+        <button class="btn btn-ghost" @click="showGuide = !showGuide">
+          {{ showGuide ? '收起指南' : '查看指南' }}
+        </button>
+
+        <button class="btn btn-danger" @click="logout">退出登录</button>
+      </div>
+    </div>
+
+    <div class="card" v-if="showGuide">
+      <div class="card-title">
+        <h2>操作指南</h2>
+        <span class="muted">适合答辩演示时快速说明</span>
+      </div>
+
+      <ul class="guide-list">
+        <li>买入：使用 X 兑换 Y，AMM 根据 x × y = k 自动计算可获得数量。</li>
+        <li>卖出：使用 Y 兑换 X，交易会产生滑点。</li>
+        <li>添加流动性：按池子当前比例同时注入 X 和 Y，获得 LP 份额。</li>
+        <li>移除流动性：销毁 LP，按比例取回池中资产。</li>
+        <li>撤回交易：仅支持 1 分钟内的买入或卖出，按当前池价反向交易，并额外收取 0.2% 手续费。</li>
+        <li>趋势图：展示价格、滑点、K 值、无常损失和滑点曲线。</li>
+      </ul>
+    </div>
+
+    <div class="stats-grid">
+      <div class="stat">
+        <div class="stat-label">池中 X 储备</div>
+        <div class="stat-value">{{ pool.x.toFixed(2) }}</div>
+        <div class="stat-note">当前 AMM 池资产</div>
+      </div>
+
+      <div class="stat">
+        <div class="stat-label">池中 Y 储备</div>
+        <div class="stat-value">{{ pool.y.toFixed(2) }}</div>
+        <div class="stat-note">当前 AMM 池资产</div>
+      </div>
+
+      <div class="stat">
+        <div class="stat-label">当前价格</div>
+        <div class="stat-value">{{ pool.price_yx.toFixed(4) }}</div>
+        <div class="stat-note">1 X = ? Y</div>
+      </div>
+
+      <div class="stat">
+        <div class="stat-label">恒定乘积 K</div>
+        <div class="stat-value">{{ formatCompact(pool.k) }}</div>
+        <div class="stat-note">K = X × Y</div>
+      </div>
+    </div>
+
+    <div class="tabs">
+      <button :class="['tab', { active: activeTab === 'trade' }]" @click="activeTab = 'trade'">交易与流动性</button>
+      <button :class="['tab', { active: activeTab === 'history' }]" @click="activeTab = 'history'">历史记录</button>
+      <button :class="['tab', { active: activeTab === 'trend' }]" @click="activeTab = 'trend'">数据趋势</button>
+    </div>
+
+    <!-- 交易面板 -->
+    <div v-show="activeTab === 'trade'">
+      <div class="main-grid">
+        <div class="card">
+          <div class="card-title">
+            <h2>交易</h2>
+            <span class="muted">手续费 {{ (pool.fee * 100).toFixed(1) }}%</span>
+          </div>
+
+          <div class="input-group">
+            <label class="input-label">交易数量</label>
+            <input
+              v-model.number="tradeAmount"
+              type="number"
+              step="any"
+              placeholder="输入要交易的数量"
+              @input="updatePreview"
+            />
+          </div>
+
+          <div class="btn-row">
+            <button class="btn btn-primary" @click="buy" :disabled="tradeAmount <= 0">买入 X → Y</button>
+            <button class="btn btn-warning" @click="sell" :disabled="tradeAmount <= 0">卖出 Y → X</button>
+            <button class="btn btn-danger" @click="cancelLastTrade">撤回最近交易</button>
+          </div>
+
+          <div class="preview-box">
+            <div class="preview-row">
+              <span>预计买入获得 Y</span>
+              <b class="highlight">{{ previewBuy.result.toFixed(4) }}</b>
+            </div>
+
+            <div class="preview-row">
+              <span>买入滑点</span>
+              <b>{{ (previewBuy.slippage * 100).toFixed(2) }}%</b>
+            </div>
+
+            <div class="preview-row">
+              <span>预计卖出获得 X</span>
+              <b class="highlight">{{ previewSell.result.toFixed(4) }}</b>
+            </div>
+
+            <div class="preview-row">
+              <span>卖出滑点</span>
+              <b>{{ (previewSell.slippage * 100).toFixed(2) }}%</b>
+            </div>
+          </div>
+
+          <div class="divider"></div>
+
+          <p class="muted">
+            撤回规则：只能撤回 1 分钟内最近一笔买入/卖出交易；撤回按当前池价重新计算，并额外扣除 0.2% 手续费。
+          </p>
+        </div>
+
+        <div class="card">
+          <div class="card-title">
+            <h2>流动性管理</h2>
+            <span class="muted">LP 总量 {{ pool.total_lp.toFixed(4) }}</span>
+          </div>
+
+          <div class="input-group">
+            <label class="input-label">{{ liquidityMode === 'add' ? '注入 X 数量' : '移除 LP 份额' }}</label>
+            <input
+              v-model.number="liquidityInput"
+              type="number"
+              step="any"
+              placeholder="输入数量"
+              @input="updateLiquidityPreview"
+            />
+          </div>
+
+          <div class="btn-row">
+            <button
+              class="btn btn-purple"
+              @click="liquidityMode === 'add' ? addLiquidity() : removeLiquidity()"
+              :disabled="liquidityInput <= 0"
+            >
+              {{ liquidityMode === 'add' ? '确认注入' : '确认移除' }}
+            </button>
+
+            <button class="btn btn-ghost" @click="toggleLiquidityMode">
+              切换为{{ liquidityMode === 'add' ? '移除流动性' : '添加流动性' }}
+            </button>
+          </div>
+
+          <div class="preview-box" v-if="liquidityPreview.show">
+            <template v-if="liquidityMode === 'add'">
+              <div class="preview-row">
+                <span>需要同时提供 Y</span>
+                <b class="highlight">{{ liquidityPreview.dy.toFixed(4) }}</b>
+              </div>
+
+              <div class="preview-row">
+                <span>预计获得 LP</span>
+                <b>{{ liquidityPreview.lp.toFixed(4) }}</b>
+              </div>
+            </template>
+
+            <template v-else>
+              <div class="preview-row">
+                <span>预计取回 X</span>
+                <b class="highlight">{{ liquidityPreview.dx.toFixed(4) }}</b>
+              </div>
+
+              <div class="preview-row">
+                <span>预计取回 Y</span>
+                <b class="highlight">{{ liquidityPreview.dy.toFixed(4) }}</b>
+              </div>
+            </template>
+          </div>
+
+          <div class="preview-box">
+            <div class="preview-row">
+              <span>你的 LP</span>
+              <b>{{ user.lp.toFixed(4) }}</b>
+            </div>
+
+            <div class="preview-row">
+              <span>当前可取回 X</span>
+              <b>{{ lpPosition.claimable_x.toFixed(4) }}</b>
+            </div>
+
+            <div class="preview-row">
+              <span>当前可取回 Y</span>
+              <b>{{ lpPosition.claimable_y.toFixed(4) }}</b>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-title">
+          <h2>风险与收益指标</h2>
+          <span class="muted">无常损失模拟</span>
+        </div>
+
+        <div class="main-grid">
+          <div>
+            <label class="input-label">价格比率 P_new / P_old：{{ impermanentRatio.toFixed(2) }}</label>
+            <input
+              type="range"
+              min="0.1"
+              max="10"
+              step="0.1"
+              v-model.number="impermanentRatio"
+              @input="calcImpermanentLoss"
+            />
+
+            <div class="preview-box">
+              <div class="preview-row">
+                <span>无常损失</span>
+                <b class="highlight">{{ impermanentLoss.toFixed(2) }}%</b>
+              </div>
+
+              <div class="preview-row">
+                <span>持有价值，以 X 计</span>
+                <b>{{ holdValue.toFixed(2) }}</b>
+              </div>
+
+              <div class="preview-row">
+                <span>做市价值，以 X 计</span>
+                <b>{{ lpValue.toFixed(2) }}</b>
+              </div>
+            </div>
+          </div>
+
+          <div class="preview-box">
+            <div class="preview-row">
+              <span>累计 X 手续费</span>
+              <b>{{ pool.fee_x_collected.toFixed(4) }}</b>
+            </div>
+
+            <div class="preview-row">
+              <span>累计 Y 手续费</span>
+              <b>{{ pool.fee_y_collected.toFixed(4) }}</b>
+            </div>
+
+            <div class="preview-row">
+              <span>1 Y = ? X</span>
+              <b>{{ pool.price_xy.toFixed(4) }}</b>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- 历史记录 -->
+    <div v-show="activeTab === 'history'">
+      <div class="card">
+        <div class="card-title">
+          <h2>我的交易记录</h2>
+          <span class="muted">撤回记录会单独生成，并标记原交易</span>
+        </div>
+
+        <div class="table-wrap">
+          <table>
+            <thead>
+              <tr>
+                <th>类型</th>
+                <th>支付</th>
+                <th>获得</th>
+                <th>成交价</th>
+                <th>滑点</th>
+                <th>手续费</th>
+                <th>K 值</th>
+                <th>状态</th>
+                <th>时间</th>
+              </tr>
+            </thead>
+
+            <tbody>
+              <tr v-for="h in history" :key="h.id || h.time">
+                <td>{{ typeLabel(h.type) }}</td>
+                <td>{{ safeFixed(h.amount, 2) }}</td>
+                <td>{{ safeFixed(h.result, 2) }}</td>
+                <td>{{ safeFixed(h.price, 4) }}</td>
+                <td>{{ h.slippage !== undefined ? (h.slippage * 100).toFixed(2) + '%' : '-' }}</td>
+                <td>
+                  <span v-if="h.fee !== undefined">{{ Number(h.fee).toFixed(4) }}</span>
+                  <span v-else-if="h.extra_cancel_fee !== undefined">{{ Number(h.extra_cancel_fee).toFixed(4) }}</span>
+                  <span v-else>-</span>
+                </td>
+                <td>{{ h.k_after !== undefined ? formatCompact(h.k_after) : '-' }}</td>
+                <td>
+                  <span v-if="h.canceled" class="status-canceled">已撤回</span>
+                  <span v-else class="status-normal">正常</span>
+                </td>
+                <td>{{ h.time }}</td>
+              </tr>
+
+              <tr v-if="history.length === 0">
+                <td colspan="9" style="text-align:center; padding:24px;">暂无交易记录</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <!-- 趋势图 -->
+    <div v-show="activeTab === 'trend'">
+      <div class="chart-grid">
+        <div class="card">
+          <div class="card-title">
+            <h3>价格走势</h3>
+            <span class="muted">Y per X</span>
+          </div>
+          <div class="chart-container">
+            <canvas id="priceChart"></canvas>
+          </div>
+        </div>
+
+        <div class="card">
+          <div class="card-title">
+            <h3>历史滑点</h3>
+            <span class="muted">%</span>
+          </div>
+          <div class="chart-container">
+            <canvas id="slipChart"></canvas>
+          </div>
+        </div>
+
+        <div class="card">
+          <div class="card-title">
+            <h3>K 值变化</h3>
+            <span class="muted">X × Y</span>
+          </div>
+          <div class="chart-container">
+            <canvas id="kChart"></canvas>
+          </div>
+        </div>
+
+        <div class="card">
+          <div class="card-title">
+            <h3>无常损失曲线</h3>
+            <span class="muted">Impermanent Loss</span>
+          </div>
+          <div class="chart-container">
+            <canvas id="ilChart"></canvas>
+          </div>
+        </div>
+
+        <div class="card">
+          <div class="card-title">
+            <h3>滑点曲线</h3>
+            <span class="muted">X → Y</span>
+          </div>
+          <div class="chart-container">
+            <canvas id="slippageCurveChart"></canvas>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+new Vue({
+  el: '#app',
+
+  data: {
+    loggedIn: false,
+
+    logo: {
+      logo_url: '',
+      logo_text: 'AMM'
+    },
+
+    toast: {
+      show: false,
+      message: '',
+      type: 'info',
+      timer: null
+    },
+
+    loginForm: {
+      username: '',
+      password: ''
+    },
+
+    showGuide: false,
+    activeTab: 'trade',
+
+    user: {
+      username: '',
+      x: 0,
+      y: 0,
+      lp: 0
+    },
+
+    pool: {
+      x: 0,
+      y: 0,
+      price_yx: 0,
+      price_xy: 0,
+      fee: 0.003,
+      total_lp: 0,
+      k: 0,
+      fee_x_collected: 0,
+      fee_y_collected: 0
+    },
+
+    lpPosition: {
+      lp: 0,
+      claimable_x: 0,
+      claimable_y: 0
+    },
+
+    tradeAmount: 0,
+
+    previewBuy: {
+      result: 0,
+      slippage: 0
+    },
+
+    previewSell: {
+      result: 0,
+      slippage: 0
+    },
+
+    liquidityInput: 0,
+    liquidityMode: 'add',
+
+    liquidityPreview: {
+      show: false,
+      dy: 0,
+      lp: 0,
+      dx: 0
+    },
+
+    history: [],
+
+    impermanentRatio: 1.0,
+    impermanentLoss: 0,
+    holdValue: 0,
+    lpValue: 0,
+
+    priceChart: null,
+    slipChart: null,
+    ilChart: null,
+    slippageCurveChart: null,
+    kChart: null
+  },
+
+  methods: {
+    notify(message, type = 'info') {
+      if (this.toast.timer) {
+        clearTimeout(this.toast.timer);
+      }
+
+      this.toast.show = true;
+      this.toast.message = message;
+      this.toast.type = type;
+
+      this.toast.timer = setTimeout(() => {
+        this.toast.show = false;
+      }, 2600);
+    },
+
+    formatCompact(value) {
+      const num = Number(value);
+
+      if (isNaN(num)) {
+        return '-';
+      }
+
+      if (Math.abs(num) >= 1e9) {
+        return (num / 1e9).toFixed(2) + 'B';
+      }
+
+      if (Math.abs(num) >= 1e6) {
+        return (num / 1e6).toFixed(2) + 'M';
+      }
+
+      if (Math.abs(num) >= 1e3) {
+        return (num / 1e3).toFixed(2) + 'K';
+      }
+
+      return num.toFixed(2);
+    },
+
+    safeFixed(value, digits) {
+      const num = Number(value);
+
+      if (isNaN(num)) {
+        return '-';
+      }
+
+      return num.toFixed(digits);
+    },
+
+    typeLabel(type) {
+      const map = {
+        buy: '买入',
+        sell: '卖出',
+        add_liquidity: '添加流动性',
+        remove_liquidity: '移除流动性',
+        cancel_buy: '撤回买入',
+        cancel_sell: '撤回卖出'
+      };
+
+      return map[type] || type;
+    },
+
+    async loadLogo() {
+      try {
+        const res = await axios.get('/api/logo');
+
+        if (res.data.success) {
+          this.logo.logo_url = res.data.logo_url || '';
+          this.logo.logo_text = res.data.logo_text || 'AMM';
+        }
+      } catch (e) {
+        this.logo.logo_url = '';
+        this.logo.logo_text = 'AMM';
+      }
+    },
+
+    async login() {
+      try {
+        const res = await axios.post('/api/login', this.loginForm);
+
+        if (res.data.success) {
+          this.loggedIn = true;
+          this.loginForm = {
+            username: '',
+            password: ''
+          };
+
+          this.notify('登录成功', 'success');
+          await this.loadData();
+        } else {
+          this.notify(res.data.message || '登录失败', 'error');
+        }
+      } catch (e) {
+        this.notify('登录请求失败，请检查后端是否启动', 'error');
+      }
+    },
+
+    async register() {
+      try {
+        const res = await axios.post('/api/register', this.loginForm);
+
+        if (res.data.success) {
+          this.notify('注册成功，请登录', 'success');
+        } else {
+          this.notify(res.data.message || '注册失败', 'error');
+        }
+      } catch (e) {
+        this.notify('注册请求失败，请检查后端', 'error');
+      }
+    },
+
+    async logout() {
+      try {
+        await axios.post('/api/logout');
+      } catch (e) {}
+
+      this.loggedIn = false;
+
+      this.user = {
+        username: '',
+        x: 0,
+        y: 0,
+        lp: 0
+      };
+
+      this.destroyAllCharts();
+      this.notify('已退出登录', 'info');
+    },
+
+    async loadData() {
+      try {
+        const [userRes, poolRes, histRes, lpRes] = await Promise.all([
+          axios.get('/api/user'),
+          axios.get('/api/pool'),
+          axios.get('/api/history'),
+          axios.get('/api/lp_position')
+        ]);
+
+        if (userRes.data.success) {
+          this.user = userRes.data.user;
+        }
+
+        this.pool = poolRes.data;
+        this.history = histRes.data || [];
+
+        if (lpRes.data.success) {
+          this.lpPosition = lpRes.data.data;
+        }
+
+        this.calcImpermanentLoss();
+
+        if (this.activeTab === 'trend') {
+          this.$nextTick(() => {
+            this.renderAllTrendCharts();
+          });
+        }
+      } catch (e) {
+        this.notify('数据加载失败，请检查后端', 'error');
+      }
+    },
+
+    async buy() {
+      const amount = parseFloat(this.tradeAmount);
+
+      if (isNaN(amount) || amount <= 0) {
+        return this.notify('请输入有效数量', 'error');
+      }
+
+      try {
+        const res = await axios.post('/api/trade/buy', {
+          amount
+        });
+
+        if (res.data.success) {
+          this.notify(`交易成功，获得 ${Number(res.data.result).toFixed(4)} Y`, 'success');
+          this.tradeAmount = 0;
+          this.previewBuy = { result: 0, slippage: 0 };
+          this.previewSell = { result: 0, slippage: 0 };
+          this.loadData();
+        } else {
+          this.notify('交易失败：' + res.data.message, 'error');
+        }
+      } catch (e) {
+        this.notify('交易请求失败，请检查后端', 'error');
+      }
+    },
+
+    async sell() {
+      const amount = parseFloat(this.tradeAmount);
+
+      if (isNaN(amount) || amount <= 0) {
+        return this.notify('请输入有效数量', 'error');
+      }
+
+      try {
+        const res = await axios.post('/api/trade/sell', {
+          amount
+        });
+
+        if (res.data.success) {
+          this.notify(`交易成功，获得 ${Number(res.data.result).toFixed(4)} X`, 'success');
+          this.tradeAmount = 0;
+          this.previewBuy = { result: 0, slippage: 0 };
+          this.previewSell = { result: 0, slippage: 0 };
+          this.loadData();
+        } else {
+          this.notify('交易失败：' + res.data.message, 'error');
+        }
+      } catch (e) {
+        this.notify('交易请求失败，请检查后端', 'error');
+      }
+    },
+
+    async cancelLastTrade() {
+      const ok = confirm(
+        '确定撤回最近 1 分钟内的交易吗？\n\n撤回会按当前池子价格反向交易，并额外扣除 0.2% 手续费。'
+      );
+
+      if (!ok) {
+        return;
+      }
+
+      try {
+        const res = await axios.post('/api/trade/cancel', {});
+
+        if (res.data.success) {
+          this.notify(res.data.message, 'success');
+          this.loadData();
+        } else {
+          this.notify('撤回失败：' + res.data.message, 'error');
+        }
+      } catch (e) {
+        this.notify('撤回请求失败，请检查后端', 'error');
+      }
+    },
+
+    async updatePreview() {
+      const amount = parseFloat(this.tradeAmount);
+
+      if (isNaN(amount) || amount <= 0) {
+        this.previewBuy = {
+          result: 0,
+          slippage: 0
+        };
+
+        this.previewSell = {
+          result: 0,
+          slippage: 0
+        };
+
+        return;
+      }
+
+      try {
+        const [buyRes, sellRes] = await Promise.all([
+          axios.get('/api/preview/buy', {
+            params: {
+              amount
+            }
+          }),
+          axios.get('/api/preview/sell', {
+            params: {
+              amount
+            }
+          })
+        ]);
+
+        if (buyRes.data.success) {
+          this.previewBuy = {
+            result: buyRes.data.result,
+            slippage: buyRes.data.slippage
+          };
+        }
+
+        if (sellRes.data.success) {
+          this.previewSell = {
+            result: sellRes.data.result,
+            slippage: sellRes.data.slippage
+          };
+        }
+      } catch (e) {}
+    },
+
+    updateLiquidityPreview() {
+      const val = parseFloat(this.liquidityInput);
+
+      if (isNaN(val) || val <= 0) {
+        this.liquidityPreview.show = false;
+        return;
+      }
+
+      if (this.liquidityMode === 'add') {
+        axios.get('/api/preview/liquidity/add', {
+          params: {
+            dx: val
+          }
+        }).then(res => {
+          if (res.data.success) {
+            this.liquidityPreview = {
+              show: true,
+              dy: res.data.dy,
+              lp: res.data.lp_minted,
+              dx: 0
+            };
+          }
+        });
+      } else {
+        axios.get('/api/preview/liquidity/remove', {
+          params: {
+            share: val
+          }
+        }).then(res => {
+          if (res.data.success) {
+            this.liquidityPreview = {
+              show: true,
+              dx: res.data.dx,
+              dy: res.data.dy,
+              lp: 0
+            };
+          }
+        });
+      }
+    },
+
+    async addLiquidity() {
+      const dx = parseFloat(this.liquidityInput);
+
+      if (isNaN(dx) || dx <= 0) {
+        return this.notify('请输入有效 X 数量', 'error');
+      }
+
+      try {
+        const res = await axios.post('/api/liquidity/add', {
+          dx
+        });
+
+        if (res.data.success) {
+          this.notify(res.data.message, 'success');
+          this.liquidityInput = 0;
+          this.liquidityPreview.show = false;
+          this.loadData();
+        } else {
+          this.notify('添加失败：' + res.data.message, 'error');
+        }
+      } catch (e) {
+        this.notify('添加流动性请求失败，请检查后端', 'error');
+      }
+    },
+
+    async removeLiquidity() {
+      const share = parseFloat(this.liquidityInput);
+
+      if (isNaN(share) || share <= 0) {
+        return this.notify('请输入有效 LP 份额', 'error');
+      }
+
+      try {
+        const res = await axios.post('/api/liquidity/remove', {
+          share
+        });
+
+        if (res.data.success) {
+          this.notify(res.data.message, 'success');
+          this.liquidityInput = 0;
+          this.liquidityPreview.show = false;
+          this.loadData();
+        } else {
+          this.notify('移除失败：' + res.data.message, 'error');
+        }
+      } catch (e) {
+        this.notify('移除流动性请求失败，请检查后端', 'error');
+      }
+    },
+
+    toggleLiquidityMode() {
+      this.liquidityMode = this.liquidityMode === 'add' ? 'remove' : 'add';
+      this.liquidityInput = 0;
+      this.liquidityPreview.show = false;
+    },
+
+    calcImpermanentLoss() {
+      const r = parseFloat(this.impermanentRatio);
+
+      if (isNaN(r) || r <= 0) {
+        return;
+      }
+
+      const il = (2 * Math.sqrt(r) / (1 + r) - 1) * 100;
+      this.impermanentLoss = il;
+
+      const price = this.pool.price_yx || 1;
+
+      const x = parseFloat(this.user.x) || 0;
+      const y = parseFloat(this.user.y) || 0;
+
+      this.holdValue = x + y / price;
+
+      const totalLp = parseFloat(this.pool.total_lp) || 1;
+      const userLp = parseFloat(this.user.lp) || 0;
+      const poolX = parseFloat(this.pool.x) || 0;
+      const poolY = parseFloat(this.pool.y) || 0;
+
+      const poolValue = poolX + poolY / price;
+
+      this.lpValue = (userLp / totalLp) * poolValue;
+    },
+
+    renderAllTrendCharts() {
+      this.renderPriceChart();
+      this.renderSlipChart();
+      this.renderKChart();
+      this.renderImpermanentLossChart();
+      this.renderSlippageCurveChart();
+    },
+
+    async renderPriceChart() {
+      try {
+        const res = await axios.get('/api/price_history');
+        const data = res.data || [];
+
+        if (this.priceChart) {
+          this.priceChart.destroy();
+        }
+
+        const ctx = document.getElementById('priceChart').getContext('2d');
+
+        this.priceChart = new Chart(ctx, {
+          type: 'line',
+          data: {
+            labels: data.map((_, i) => i + 1),
+            datasets: [{
+              label: 'Y per X',
+              data,
+              borderColor: '#4f46e5',
+              backgroundColor: 'rgba(79,70,229,0.08)',
+              borderWidth: 2,
+              fill: true,
+              tension: 0.35
+            }]
+          },
+          options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+              legend: {
+                display: true
+              }
+            },
+            scales: {
+              y: {
+                beginAtZero: false
+              }
+            }
+          }
+        });
+      } catch (e) {}
+    },
+
+    async renderSlipChart() {
+      try {
+        const res = await axios.get('/api/slippage_history');
+        const data = (res.data || []).map(v => v * 100);
+
+        if (this.slipChart) {
+          this.slipChart.destroy();
+        }
+
+        const ctx = document.getElementById('slipChart').getContext('2d');
+
+        this.slipChart = new Chart(ctx, {
+          type: 'line',
+          data: {
+            labels: data.map((_, i) => i + 1),
+            datasets: [{
+              label: '滑点 (%)',
+              data,
+              borderColor: '#f59e0b',
+              backgroundColor: 'rgba(245,158,11,0.08)',
+              borderWidth: 2,
+              fill: true,
+              tension: 0.35
+            }]
+          },
+          options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            scales: {
+              y: {
+                beginAtZero: true
+              }
+            }
+          }
+        });
+      } catch (e) {}
+    },
+
+    async renderKChart() {
+      try {
+        const res = await axios.get('/api/k_history');
+        const data = res.data || [];
+
+        if (this.kChart) {
+          this.kChart.destroy();
+        }
+
+        const ctx = document.getElementById('kChart').getContext('2d');
+
+        this.kChart = new Chart(ctx, {
+          type: 'line',
+          data: {
+            labels: data.map((_, i) => i + 1),
+            datasets: [{
+              label: 'K = X * Y',
+              data,
+              borderColor: '#10b981',
+              backgroundColor: 'rgba(16,185,129,0.08)',
+              borderWidth: 2,
+              fill: true,
+              tension: 0.35
+            }]
+          },
+          options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            scales: {
+              y: {
+                beginAtZero: false
+              }
+            }
+          }
+        });
+      } catch (e) {}
+    },
+
+    async renderImpermanentLossChart() {
+      try {
+        const res = await axios.get('/api/impermanent_loss');
+        const r = res.data.r || [];
+        const il = res.data.il || [];
+
+        if (this.ilChart) {
+          this.ilChart.destroy();
+        }
+
+        const ctx = document.getElementById('ilChart').getContext('2d');
+
+        this.ilChart = new Chart(ctx, {
+          type: 'line',
+          data: {
+            labels: r,
+            datasets: [{
+              label: '无常损失 (%)',
+              data: il,
+              borderColor: '#8b5cf6',
+              backgroundColor: 'rgba(139,92,246,0.08)',
+              borderWidth: 2,
+              fill: true,
+              tension: 0.35
+            }]
+          },
+          options: {
+            responsive: true,
+            maintainAspectRatio: false
+          }
+        });
+      } catch (e) {}
+    },
+
+    async renderSlippageCurveChart() {
+      try {
+        const res = await axios.get('/api/slippage_curve');
+
+        const dx = res.data.dx || [];
+        const dy_actual = res.data.dy_actual || [];
+        const dy_theory = res.data.dy_theory || [];
+
+        if (this.slippageCurveChart) {
+          this.slippageCurveChart.destroy();
+        }
+
+        const ctx = document.getElementById('slippageCurveChart').getContext('2d');
+
+        this.slippageCurveChart = new Chart(ctx, {
+          type: 'line',
+          data: {
+            labels: dx.map(v => Number(v).toFixed(2)),
+            datasets: [
+              {
+                label: '实际获得 Y',
+                data: dy_actual,
+                borderColor: '#4f46e5',
+                borderWidth: 2,
+                fill: false,
+                tension: 0.35
+              },
+              {
+                label: '理论获得 Y',
+                data: dy_theory,
+                borderColor: '#94a3b8',
+                borderDash: [5, 5],
+                borderWidth: 2,
+                fill: false,
+                tension: 0.35
+              }
+            ]
+          },
+          options: {
+            responsive: true,
+            maintainAspectRatio: false
+          }
+        });
+      } catch (e) {}
+    },
+
+    destroyAllCharts() {
+      [
+        this.priceChart,
+        this.slipChart,
+        this.ilChart,
+        this.slippageCurveChart,
+        this.kChart
+      ].forEach(chart => {
+        if (chart) {
+          chart.destroy();
+        }
+      });
+
+      this.priceChart = null;
+      this.slipChart = null;
+      this.ilChart = null;
+      this.slippageCurveChart = null;
+      this.kChart = null;
+    }
+  },
+
+  watch: {
+    activeTab(val) {
+      if (val === 'trend') {
+        this.$nextTick(() => {
+          this.renderAllTrendCharts();
+        });
+      }
+    },
+
+    impermanentRatio() {
+      this.calcImpermanentLoss();
+    }
+  },
+
+  mounted() {
+    this.loadLogo();
+
+    axios.get('/api/user').then(res => {
+      if (res.data.success) {
+        this.loggedIn = true;
+        this.loadData();
+      }
+    }).catch(() => {});
+  }
+});
+</script>
+</body>
+</html>
